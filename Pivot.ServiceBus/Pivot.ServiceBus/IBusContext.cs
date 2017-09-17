@@ -3,7 +3,7 @@ using System.Threading.Tasks;
 
 namespace Pivot.ServiceBus
 {
-    internal interface IBusContext
+    public interface IBusContext
     {
         Task Send(object message);
         Task Send(string endpoint, object message);
