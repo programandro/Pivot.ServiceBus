@@ -5,7 +5,9 @@ VisualStudioVersion = 15.0.26730.10
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Pivot.ServiceBus", "Pivot.ServiceBus\Pivot.ServiceBus.csproj", "{3AA19095-402F-410D-9878-D1C91AEAAF85}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PreQ", "PreQ\PreQ.csproj", "{8138B50E-31EA-4172-8488-F550C445A06F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PreQ", "PreQ\PreQ.csproj", "{8138B50E-31EA-4172-8488-F550C445A06F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Pivot.Log", "Pivot.Log\Pivot.Log.csproj", "{7DA2FA1B-64A7-422D-B2CB-956310FD3291}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,6 +23,10 @@ Global
 		{8138B50E-31EA-4172-8488-F550C445A06F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8138B50E-31EA-4172-8488-F550C445A06F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{8138B50E-31EA-4172-8488-F550C445A06F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7DA2FA1B-64A7-422D-B2CB-956310FD3291}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7DA2FA1B-64A7-422D-B2CB-956310FD3291}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7DA2FA1B-64A7-422D-B2CB-956310FD3291}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7DA2FA1B-64A7-422D-B2CB-956310FD3291}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

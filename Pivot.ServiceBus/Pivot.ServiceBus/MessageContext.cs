@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 
 namespace Pivot.ServiceBus
 {
-    public sealed class MessageContext<T>
+    public class MessageContext<T>
     {
         private IBusContext _context;
         public MessageContext(IBusContext context)
