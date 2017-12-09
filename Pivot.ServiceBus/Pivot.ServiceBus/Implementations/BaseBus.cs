@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Pivot.ServiceBus.Implementations
@@ -9,13 +11,16 @@ namespace Pivot.ServiceBus.Implementations
     {
         protected IChannel _channel;
         protected ISerializer _serializer;
-        protected IConsumerProvider _consumerProvider;
+        protected ISubcriptionBinder _binder;
+        protected bool _isRunning;
+        private Task _receivingTask;
 
-        public BaseBus(IChannel channel, ISerializer serializer, IConsumerProvider consumerProvider)
+        public BaseBus(IChannel channel, ISerializer serializer, ISubcriptionBinder binder)
         {
             _channel = channel;
             _serializer = serializer;
-            _consumerProvider = consumerProvider;
+            _binder = binder;
+            _isRunning = false;
         }
 
         public void Dispose()
@@ -24,9 +29,17 @@ namespace Pivot.ServiceBus.Implementations
             _serializer?.Dispose();
         }
 
-        public Task Publish(object message)
+        public async Task Publish(object message)
         {
-            throw new NotImplementedException();
+            if (message == null)
+                throw new NullReferenceException("Message can't be null");
+
+            var subscriptions = (await _binder.GetOutgoingSubscriptions(message.GetType()))?.ToList();
+            if (subscriptions != null && subscriptions.Count > 0)
+            {                
+                var tasks = subscriptions.SelectMany(s => s.Addresses).Distinct().Select(a => Send(a, message));
+                Task.WaitAll(tasks.ToArray());
+            }
         }
 
         public Task<object> Request(string endpoint, object message, TimeSpan timeOut)
@@ -39,19 +52,56 @@ namespace Pivot.ServiceBus.Implementations
             throw new NotImplementedException();
         }
 
-        public Task Send(object message)
+        public async Task Send(object message)
         {
-            throw new NotImplementedException();
+            if (message == null)
+                throw new NullReferenceException("Message can't be null");
+
+            var type = message.GetType();
+            var subscriptions = (await _binder.GetOutgoingSubscriptions(type))?.ToList();
+            if (subscriptions != null && subscriptions.Count > 0)
+            {
+                var addresses = subscriptions.SelectMany(s => s.Addresses).Distinct().ToList();
+
+                if (addresses.Count > 1)
+                    throw new ArgumentException($"There is more than one address configured for type '{type}'");
+
+                await Send(addresses[0], message);
+            }
         }
 
-        public Task Send(string endpoint, object message)
+        public async Task Send(string endpoint, object message)
         {
-            throw new NotImplementedException();
+            if (message == null)
+                throw new NullReferenceException("Message can't be null");
+
+            var wiredMessage = new WiredMessage(_channel.Address, Guid.NewGuid(), message);
+            var bytes = _serializer.Serialize(wiredMessage);
+            await _channel.Send(endpoint, bytes);
         }
 
-        public Task Start()
+        public async Task Start()
         {
-            throw new NotImplementedException();
+            await _channel.StartListening();            
+            _isRunning = true;
+
+            _receivingTask = Task.Run(() =>
+                    {
+                        while (_isRunning)
+                        {
+                            var bytes = _channel.GetNextBytes();
+                            Receive(bytes);
+                        }
+                    });
+        }
+
+        private void Receive(byte[] bytes)
+        {
+            var wiredMessage = _serializer.Deserialize<WiredMessage>(bytes);
+            if (wiredMessage?.Content == null)
+                return;
+
+            var consumerSubscriptions = _binder.GetIncommingSubscriptions(wiredMessage.Content.GetType());
         }
 
         public Task Stop()
@@ -59,9 +109,4 @@ namespace Pivot.ServiceBus.Implementations
             throw new NotImplementedException();
         }
     }
-}
-
-public enum SendBehavior
-{
-    Spread
 }

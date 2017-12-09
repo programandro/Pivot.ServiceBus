@@ -42,7 +42,7 @@ namespace PreQ
             throw new NotImplementedException();
         }
 
-        public Task Send(object message)
+        public async Task Send(object message)
         {
             if (message == null)
                 throw new NullReferenceException("Message can't be null");
@@ -57,6 +57,16 @@ namespace PreQ
         }
 
         public Task Send(string endpoint, object message)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task Start()
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task Stop()
         {
             throw new NotImplementedException();
         }
