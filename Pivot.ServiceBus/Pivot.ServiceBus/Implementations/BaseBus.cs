@@ -101,7 +101,11 @@ namespace Pivot.ServiceBus.Implementations
             if (wiredMessage?.Content == null)
                 return;
 
-            var consumerSubscriptions = _binder.GetIncommingSubscriptions(wiredMessage.Content.GetType());
+            var consumerSubscriptions = _binder.GetIncommingSubscriptions(wiredMessage.Content.GetType())?.ToList();
+            if (consumerSubscriptions == null || consumerSubscriptions.Count == 0)
+                return;
+
+            
         }
 
         public Task Stop()
