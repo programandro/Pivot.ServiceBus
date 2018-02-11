@@ -14,6 +14,9 @@ namespace Pivot.ServiceBus.Implementations
         protected ISubcriptionBinder _binder;
         protected bool _isRunning;
         private Task _receivingTask;
+        private BusOptions _initialOptions;
+        protected BusOptions _runningOptions;
+
 
         public BaseBus(IChannel channel, ISerializer serializer, ISubcriptionBinder binder)
         {
@@ -21,7 +24,22 @@ namespace Pivot.ServiceBus.Implementations
             _serializer = serializer;
             _binder = binder;
             _isRunning = false;
+            _initialOptions = GetDefaultOptions();
+            _runningOptions = null;
         }
+
+        protected virtual BusOptions GetDefaultOptions()
+        {
+            return new BusOptions
+            {
+                DefaultSubscriptionOptions = new SubscriptionOptions
+                {
+                    MaxConcurrentCount = 1
+                }
+            };
+        }
+
+        public BusOptions Options => _initialOptions;
 
         public void Dispose()
         {
@@ -34,11 +52,11 @@ namespace Pivot.ServiceBus.Implementations
             if (message == null)
                 throw new NullReferenceException("Message can't be null");
 
-            var subscriptions = (await _binder.GetOutgoingSubscriptions(message.GetType()))?.ToList();
+            var subscriptions = _binder.GetOutgoingSubscriptions(message.GetType())?.ToList();
             if (subscriptions != null && subscriptions.Count > 0)
             {                
                 var tasks = subscriptions.SelectMany(s => s.Addresses).Distinct().Select(a => Send(a, message));
-                Task.WaitAll(tasks.ToArray());
+                await Task.WhenAll(tasks.ToArray());
             }
         }
 
@@ -58,7 +76,7 @@ namespace Pivot.ServiceBus.Implementations
                 throw new NullReferenceException("Message can't be null");
 
             var type = message.GetType();
-            var subscriptions = (await _binder.GetOutgoingSubscriptions(type))?.ToList();
+            var subscriptions = _binder.GetOutgoingSubscriptions(type)?.ToList();
             if (subscriptions != null && subscriptions.Count > 0)
             {
                 var addresses = subscriptions.SelectMany(s => s.Addresses).Distinct().ToList();
@@ -82,6 +100,8 @@ namespace Pivot.ServiceBus.Implementations
 
         public async Task Start()
         {
+            ConfigureRunningOptions();
+
             await _channel.StartListening();            
             _isRunning = true;
 
@@ -93,6 +113,20 @@ namespace Pivot.ServiceBus.Implementations
                             Receive(bytes);
                         }
                     });
+        }
+
+        private void ConfigureRunningOptions()
+        {
+            _runningOptions = new BusOptions();
+            foreach (var key in _initialOptions.SubscriptionsOptions.Keys)
+            {
+                var newSubOption = new SubscriptionOptions();
+                var initSubOption = _initialOptions.SubscriptionsOptions[key];
+
+                newSubOption.MaxConcurrentCount = initSubOption.MaxConcurrentCount ?? _initialOptions.DefaultSubscriptionOptions.MaxConcurrentCount;
+
+                _runningOptions.SubscriptionsOptions.Add(key, newSubOption);
+            }
         }
 
         private void Receive(byte[] bytes)
