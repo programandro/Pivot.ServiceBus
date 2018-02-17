@@ -7,6 +7,6 @@ namespace Pivot.ServiceBus.Implementations
     public interface ISubcriptionBinder : IDisposable
     {
         IEnumerable<OutgoingSubscription> GetOutgoingSubscriptions(Type type);
-        IEnumerable<OutgoingSubscription> GetIncommingSubscriptions(Type type);
+        IEnumerable<IncommingSubscription> GetIncommingSubscriptions(Type type);
     }
 }
